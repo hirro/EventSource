@@ -187,6 +187,7 @@
 				TargetAttributes = {
 					41DFE4231A8E686F000C3519 = {
 						CreatedOnToolsVersion = 6.0.1;
+						DevelopmentTeam = 29A99X9KB2;
 						LastSwiftMigration = 0800;
 					};
 					41DFE4381A8E6870000C3519 = {
@@ -380,6 +381,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 29A99X9KB2;
 				INFOPLIST_FILE = "$(SRCROOT)/EventSourceExample/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.inaka.$(PRODUCT_NAME:rfc1034identifier)";
@@ -392,6 +394,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 29A99X9KB2;
 				INFOPLIST_FILE = "$(SRCROOT)/EventSourceExample/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.inaka.$(PRODUCT_NAME:rfc1034identifier)";

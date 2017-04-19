@@ -12,6 +12,7 @@ public enum EventSourceState {
     case connecting
     case open
     case closed
+    case stopped
 }
 
 open class EventSource: NSObject, URLSessionDataDelegate {
@@ -78,7 +79,7 @@ open class EventSource: NSObject, URLSessionDataDelegate {
         configuration.timeoutIntervalForResource = TimeInterval(INT_MAX)
         configuration.httpAdditionalHeaders = additionalHeaders
 
-        self.readyState = EventSourceState.connecting
+        self.setReadyState(state: EventSourceState.connecting)
         self.urlSession = newSession(configuration)
         self.task = urlSession!.dataTask(with: self.url)
 
@@ -98,7 +99,12 @@ open class EventSource: NSObject, URLSessionDataDelegate {
 //Mark: Close
 
     open func close() {
-        self.readyState = EventSourceState.closed
+        self.setReadyState(state: EventSourceState.closed)
+        self.urlSession?.invalidateAndCancel()
+    }
+    
+    open func stop() {
+        self.setReadyState(state: EventSourceState.stopped)
         self.urlSession?.invalidateAndCancel()
     }
 
@@ -168,7 +174,7 @@ open class EventSource: NSObject, URLSessionDataDelegate {
 			return
 		}
 
-        self.readyState = EventSourceState.open
+        self.setReadyState(state: EventSourceState.open)
         if self.onOpenCallback != nil {
             DispatchQueue.main.async {
                 self.onOpenCallback!()
@@ -177,17 +183,19 @@ open class EventSource: NSObject, URLSessionDataDelegate {
     }
 
     open func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        self.readyState = EventSourceState.closed
+        self.setReadyState(state: EventSourceState.closed)
 
 		if self.receivedMessageToClose(task.response as? HTTPURLResponse) {
 			return
 		}
-
-        if error == nil || (error as! NSError).code != -999 {
-            let nanoseconds = Double(self.retryTime) / 1000.0 * Double(NSEC_PER_SEC)
-            let delayTime = DispatchTime.now() + Double(Int64(nanoseconds)) / Double(NSEC_PER_SEC)
-            DispatchQueue.main.asyncAfter(deadline: delayTime) {
-                self.connect()
+        
+        if (self.readyState != EventSourceState.stopped) {
+            if error == nil || (error as! NSError).code != NSURLErrorCancelled {
+                let nanoseconds = Double(self.retryTime) / 1000.0 * Double(NSEC_PER_SEC)
+                let delayTime = DispatchTime.now() + Double(Int64(nanoseconds)) / Double(NSEC_PER_SEC)
+                DispatchQueue.main.asyncAfter(deadline: delayTime) {
+                    self.connect()
+                }
             }
         }
 
@@ -353,6 +361,14 @@ open class EventSource: NSObject, URLSessionDataDelegate {
 
     fileprivate func trim(_ string: String) -> String {
         return string.trimmingCharacters(in: CharacterSet.whitespaces)
+    }
+    
+    fileprivate func setReadyState(state: EventSourceState) {
+        guard (self.readyState != EventSourceState.stopped) else {
+            return
+        }
+        
+        self.readyState = state
     }
 
     class open func basicAuth(_ username: String, password: String) -> String {
