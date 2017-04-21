@@ -35,14 +35,20 @@ open class EventSource: NSObject, URLSessionDataDelegate {
     internal let receivedDataBuffer: NSMutableData
 	fileprivate let uniqueIdentifier: String
     fileprivate let validNewlineCharacters = ["\r\n", "\n", "\r"]
+    fileprivate var urlSessionConfiguration: URLSessionConfiguration?
 
     var event = Dictionary<String, String>()
 
 
-    public init(url: String, headers: [String : String] = [:]) {
-
+    convenience public init(url: String, headers: [String : String] = [:]) {
+        self.init(url: url, headers: headers)
+    }
+    
+    public init(url: String, headers: [String : String] = [:], urlSessionConfiguration: URLSessionConfiguration?) {
+        
         self.url = URL(string: url)!
         self.headers = headers
+        self.urlSessionConfiguration = urlSessionConfiguration
         self.readyState = EventSourceState.closed
         self.operationQueue = OperationQueue()
         self.receivedString = nil
@@ -66,17 +72,17 @@ open class EventSource: NSObject, URLSessionDataDelegate {
 //Mark: Connect
 
     func connect() {
+
+        let configuration = self.urlSessionConfiguration ?? createDefaultUrlSessionConfiguration()
+        
+        // Addutional headers
         var additionalHeaders = self.headers
         if let eventID = self.lastEventID {
             additionalHeaders["Last-Event-Id"] = eventID
         }
-
+        
         additionalHeaders["Accept"] = "text/event-stream"
         additionalHeaders["Cache-Control"] = "no-cache"
-
-        let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = TimeInterval(INT_MAX)
-        configuration.timeoutIntervalForResource = TimeInterval(INT_MAX)
         configuration.httpAdditionalHeaders = additionalHeaders
 
         self.setReadyState(state: EventSourceState.connecting)
@@ -369,6 +375,13 @@ open class EventSource: NSObject, URLSessionDataDelegate {
         }
         
         self.readyState = state
+    }
+    
+    fileprivate func createDefaultUrlSessionConfiguration() -> URLSessionConfiguration {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = TimeInterval(INT_MAX)
+        configuration.timeoutIntervalForResource = TimeInterval(INT_MAX)
+        return configuration
     }
 
     class open func basicAuth(_ username: String, password: String) -> String {
