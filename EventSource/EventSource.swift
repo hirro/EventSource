@@ -41,7 +41,7 @@ open class EventSource: NSObject, URLSessionDataDelegate {
 
 
     convenience public init(url: String, headers: [String : String] = [:]) {
-        self.init(url: url, headers: headers)
+        self.init(url: url, headers: headers, urlSessionConfiguration: nil)
     }
     
     public init(url: String, headers: [String : String] = [:], urlSessionConfiguration: URLSessionConfiguration?) {
@@ -370,11 +370,10 @@ open class EventSource: NSObject, URLSessionDataDelegate {
     }
     
     fileprivate func setReadyState(state: EventSourceState) {
-        guard (self.readyState != EventSourceState.stopped) else {
-            return
+        // Only possible to exit stopped by doing a new initiate
+        if (self.readyState != EventSourceState.stopped) {
+            self.readyState = state
         }
-        
-        self.readyState = state
     }
     
     fileprivate func createDefaultUrlSessionConfiguration() -> URLSessionConfiguration {
